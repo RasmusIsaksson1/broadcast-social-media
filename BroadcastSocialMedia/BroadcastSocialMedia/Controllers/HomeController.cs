@@ -3,6 +3,7 @@ using BroadcastSocialMedia.Models;
 using BroadcastSocialMedia.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
 namespace BroadcastSocialMedia.Controllers
@@ -20,8 +21,15 @@ namespace BroadcastSocialMedia.Controllers
 			_dbcontext = dbContext;
 		}
 
-		public IActionResult Index()
+		public async Task<IActionResult> Index()
 		{
+			var user = await _userManager.GetUserAsync(User);
+			var dbUser = await _dbcontext.Users.Where(U => U.Id == user.Id).FirstOrDefaultAsync();
+
+			var listeningTo = await _dbcontext.Users.Where(u => u.Id == user.Id)
+				.SelectMany(u => u.ListeningTo)
+				.ToListAsync();
+
 			return View();
 		}
 

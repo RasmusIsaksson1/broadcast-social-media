@@ -4,6 +4,7 @@ using BroadcastSocialMedia.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Metadata.Ecma335;
 
 namespace BroadcastSocialMedia.Controllers
 {
@@ -38,7 +39,7 @@ namespace BroadcastSocialMedia.Controllers
             var broadcasts = await _dbcontext.Broadcasts.Where(b => b.User.Id == id)
                 .OrderByDescending(b => b.Published)
                 .ToListAsync();
-            var user = await _userManager.GetUserAsync(User);
+            var user = await _dbcontext.Users.Where(u => u.Id == id).FirstOrDefaultAsync();
 
             var viewModel = new UsersShowUserViewModel
             {
@@ -47,6 +48,21 @@ namespace BroadcastSocialMedia.Controllers
             };
 
             return View(viewModel);
+        }
+
+        [HttpPost, Route("/Users/Listen")]
+        public async Task<IActionResult> ListenToUser(UsersListenToUserViewModel viewModel)
+        {
+            var loggedInUser = await _userManager.GetUserAsync(User);
+            var userToListenTo = await _dbcontext.Users.Where(u => u.Id == viewModel.UserId)
+                .FirstOrDefaultAsync();
+
+            loggedInUser.ListeningTo.Add(userToListenTo);
+
+            await _userManager.UpdateAsync(loggedInUser);
+            await _dbcontext.SaveChangesAsync();
+
+            return Redirect("/");
         }
     }
 }
